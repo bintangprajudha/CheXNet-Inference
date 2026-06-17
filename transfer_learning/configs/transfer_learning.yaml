@@ -1,0 +1,16 @@
+seed: 42
+image_size: 224
+batch_size: 8
+num_workers: 0
+stage_a:
+  epochs: 10
+  learning_rate: 0.001
+stage_b:
+  epochs: 30
+  backbone_learning_rate: 0.00001
+  classifier_learning_rate: 0.0001
+  early_stopping_patience: 7
+thresholds:
+  start: 0.10
+  stop: 0.90
+  step: 0.05
