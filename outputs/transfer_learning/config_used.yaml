@@ -1,0 +1,30 @@
+{
+  "data_root": "Splitted dataset",
+  "data_yaml": "Splitted dataset\\data.yaml",
+  "checkpoint": "model.pth.tar",
+  "output_dir": "outputs\\transfer_learning",
+  "batch_size": 8,
+  "image_size": 224,
+  "stage_a_epochs": 10,
+  "stage_b_epochs": 30,
+  "stage_a_lr": 0.001,
+  "stage_b_backbone_lr": 1e-05,
+  "stage_b_classifier_lr": 0.0001,
+  "patience": 7,
+  "seed": 42,
+  "num_workers": 0,
+  "device": "auto",
+  "cpu": false,
+  "dry_run": false,
+  "class_names": [
+    "kavitas",
+    "infiltrat",
+    "limfadenopati",
+    "tuberkuloma",
+    "bronkiektasis",
+    "pneumothorax",
+    "efusi pleura",
+    "atelektasis"
+  ],
+  "device_used": "cuda"
+}

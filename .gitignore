@@ -1,6 +1,5 @@
 Splitted dataset/
 Splitted dataset_backup/
-outputs/
 __pycache__/
 .venv/
 *.pyc

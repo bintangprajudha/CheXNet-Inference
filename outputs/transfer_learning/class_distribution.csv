@@ -1,0 +1,9 @@
+class_name,positive_count,negative_count,pos_weight
+kavitas,42,118,2.8095238095238093
+infiltrat,135,25,0.18518518518518517
+limfadenopati,0,160,160.0
+tuberkuloma,4,156,39.0
+bronkiektasis,0,160,160.0
+pneumothorax,1,159,159.0
+efusi pleura,18,142,7.888888888888889
+atelektasis,8,152,19.0

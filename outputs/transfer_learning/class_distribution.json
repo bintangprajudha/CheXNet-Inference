@@ -1,0 +1,50 @@
+[
+  {
+    "class_name": "kavitas",
+    "positive_count": 42,
+    "negative_count": 118,
+    "pos_weight": 2.8095238095238093
+  },
+  {
+    "class_name": "infiltrat",
+    "positive_count": 135,
+    "negative_count": 25,
+    "pos_weight": 0.18518518518518517
+  },
+  {
+    "class_name": "limfadenopati",
+    "positive_count": 0,
+    "negative_count": 160,
+    "pos_weight": 160.0
+  },
+  {
+    "class_name": "tuberkuloma",
+    "positive_count": 4,
+    "negative_count": 156,
+    "pos_weight": 39.0
+  },
+  {
+    "class_name": "bronkiektasis",
+    "positive_count": 0,
+    "negative_count": 160,
+    "pos_weight": 160.0
+  },
+  {
+    "class_name": "pneumothorax",
+    "positive_count": 1,
+    "negative_count": 159,
+    "pos_weight": 159.0
+  },
+  {
+    "class_name": "efusi pleura",
+    "positive_count": 18,
+    "negative_count": 142,
+    "pos_weight": 7.888888888888889
+  },
+  {
+    "class_name": "atelektasis",
+    "positive_count": 8,
+    "negative_count": 152,
+    "pos_weight": 19.0
+  }
+]

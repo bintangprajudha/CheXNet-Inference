@@ -1,0 +1,11 @@
+output_file,filename,predicted_class,probability,ground_truth_labels
+0000_CXR075_001_infiltrat.jpg,CXR075_001.jpg,infiltrat,0.626640,kavitas|infiltrat|atelektasis
+0001_CXR075_002_infiltrat.jpg,CXR075_002.jpg,infiltrat,0.622869,kavitas|infiltrat|atelektasis
+0002_CXR072_001_infiltrat.jpg,CXR072_001.jpg,infiltrat,0.744185,kavitas|infiltrat|efusi pleura
+0003_CXR070_001_infiltrat.jpg,CXR070_001.jpg,infiltrat,0.786418,kavitas|infiltrat
+0004_CXR070_002_infiltrat.jpg,CXR070_002.jpg,infiltrat,0.514224,infiltrat
+0005_CXR070_003_infiltrat.jpg,CXR070_003.jpg,infiltrat,0.711132,infiltrat
+0006_CXR071_001_infiltrat.jpg,CXR071_001.jpg,infiltrat,0.323058,infiltrat
+0007_CXR073_001_kavitas.jpg,CXR073_001.jpg,kavitas,0.821438,kavitas|infiltrat
+0008_CXR073_002_infiltrat.jpg,CXR073_002.jpg,infiltrat,0.813269,infiltrat
+0009_CXR073_003_infiltrat.jpg,CXR073_003.jpg,infiltrat,0.635843,infiltrat

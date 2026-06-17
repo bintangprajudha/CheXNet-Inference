@@ -1,0 +1,67 @@
+{
+  "exact_match_accuracy": 0.1,
+  "micro_precision": 0.4444444444444444,
+  "micro_recall": 0.6666666666666666,
+  "micro_f1": 0.5333333333333333,
+  "macro_precision": 0.28125,
+  "macro_recall": 0.2125,
+  "macro_f1": 0.20833333333333334,
+  "per_class": {
+    "kavitas": {
+      "precision": 1.0,
+      "recall": 0.2,
+      "f1": 0.33333333333333337,
+      "roc_auc": null,
+      "pr_auc": null
+    },
+    "infiltrat": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": null,
+      "pr_auc": null
+    },
+    "limfadenopati": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": null,
+      "pr_auc": null
+    },
+    "tuberkuloma": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": null,
+      "pr_auc": null
+    },
+    "bronkiektasis": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": null,
+      "pr_auc": null
+    },
+    "pneumothorax": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": null,
+      "pr_auc": null
+    },
+    "efusi pleura": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": null,
+      "pr_auc": null
+    },
+    "atelektasis": {
+      "precision": 0.25,
+      "recall": 0.5,
+      "f1": 0.3333333333333333,
+      "roc_auc": null,
+      "pr_auc": null
+    }
+  }
+}
