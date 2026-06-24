@@ -14,3 +14,4 @@ ai_commands*
 *.pt
 *.ckpt
 !model.pth.tar
+.vscode/
