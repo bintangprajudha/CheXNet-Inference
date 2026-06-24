@@ -2,7 +2,9 @@
 
 This folder contains the CheXNet/DenseNet121 inference workflow for the RSHS chest X-ray dataset.
 
-`inference.py` loads `model.pth.tar`, runs multi-label inference on the selected dataset splits, writes prediction and metric files, and can optionally generate Grad-CAM heatmaps with weak-localization bounding boxes.
+`inference.py` loads `model.pth.tar`, applies lung ROI masks, runs multi-label inference on the selected dataset splits, writes prediction and metric files, and can optionally generate Grad-CAM heatmaps with weak-localization bounding boxes.
+
+Pipeline overview: [PIPELINE.md](PIPELINE.md)
 
 ## Basic Inference
 
@@ -48,7 +50,7 @@ inference/inference_test_metrics.json
 The CSV includes one row per image with:
 
 ```text
-split, image, top1_label, top1_score, predicted_labels, prob_<class>
+split, image, top1_label, top1_score, predicted_labels, roi_mask_file, prob_<class>
 ```
 
 The metrics JSON includes:
@@ -66,13 +68,13 @@ To generate Grad-CAM heatmaps and weak-localization bounding boxes:
 python inference/inference.py --checkpoint model.pth.tar --data-root "Splitted dataset" --generate-heatmaps
 ```
 
-By default, heatmaps and boxes are restricted to lung ROI masks from:
+By default, the model input is masked to lung ROI before inference from:
 
 ```text
 lung segmentation/output_masks/
 ```
 
-Disable ROI masking with:
+Disable ROI masking for inference with:
 
 ```bash
 python inference/inference.py --checkpoint model.pth.tar --data-root "Splitted dataset" --generate-heatmaps --no-roi-mask
@@ -83,6 +85,8 @@ Heatmap outputs are written to:
 ```text
 inference/heatmaps/
 ```
+
+Heatmap overlays use a jet-style colormap. ROI masking is applied to inference only; Grad-CAM heatmaps and bounding boxes are generated from the original image, using the inferred classes as targets.
 
 Output structure:
 
@@ -135,7 +139,7 @@ bbox_yolo
 yolo_label_file
 ```
 
-Important: these boxes are generated from Grad-CAM heatmaps and lung ROI masks. They are weak-localization/explainability boxes, not final object-detection ground truth.
+Important: these boxes are generated from Grad-CAM heatmaps. They are weak-localization/explainability boxes, not final object-detection ground truth.
 
 ## Useful Options
 

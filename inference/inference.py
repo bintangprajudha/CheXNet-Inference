@@ -158,12 +158,12 @@ def parse_args() -> argparse.Namespace:
         "--roi-mask-root",
         type=Path,
         default=Path("lung segmentation") / "output_masks",
-        help="Root directory containing lung ROI masks by split. Used when generating heatmaps.",
+        help="Root directory containing lung ROI masks by split. Used for model inference.",
     )
     parser.add_argument(
         "--no-roi-mask",
         action="store_true",
-        help="Disable lung ROI masking for heatmaps and bounding boxes.",
+        help="Disable lung ROI masking for model inference.",
     )
     return parser.parse_args()
 
@@ -354,24 +354,24 @@ def get_transform(image_size: int) -> transforms.Compose:
     )
 
 
-def collect_images_from_split(split_dir: Path, split_name: str) -> List[Tuple[str, Path]]:
+def collect_images_from_split(split_dir: Path, split_name: str) -> List[Tuple[str, str, Path]]:
     if not split_dir.exists():
         raise FileNotFoundError(f"Split directory not found: {split_dir}")
 
-    unique_images: Dict[str, Path] = {}
+    image_records: List[Tuple[str, str, Path]] = []
     for p in sorted(split_dir.rglob("*")):
         if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS:
-            if p.name not in unique_images:
-                unique_images[p.name] = p
+            sample_id = p.relative_to(split_dir).as_posix()
+            image_records.append((split_name, sample_id, p))
 
-    if not unique_images:
+    if not image_records:
         raise ValueError(f"No images found in: {split_dir}")
 
-    return [(split_name, path) for path in unique_images.values()]
+    return image_records
 
 
-def collect_images(data_root: Path, splits: List[str]) -> List[Tuple[str, Path]]:
-    image_records: List[Tuple[str, Path]] = []
+def collect_images(data_root: Path, splits: List[str]) -> List[Tuple[str, str, Path]]:
+    image_records: List[Tuple[str, str, Path]] = []
     for split in splits:
         image_records.extend(collect_images_from_split(data_root / split, split))
     return image_records
@@ -404,7 +404,8 @@ def load_ground_truth_vectors(
 
             for img_path in class_dir.iterdir():
                 if img_path.is_file() and img_path.suffix.lower() in IMAGE_EXTENSIONS:
-                    image_key = f"{split}/{img_path.name}"
+                    sample_id = img_path.relative_to(split_dir).as_posix()
+                    image_key = f"{split}/{sample_id}"
                     if image_key not in gt_vectors:
                         gt_vectors[image_key] = [0] * class_count
 
@@ -590,11 +591,19 @@ def denormalize_tensor(tensor: torch.Tensor) -> Image.Image:
 
 
 def overlay_heatmap(image: Image.Image, cam: np.ndarray) -> Image.Image:
-    image = image.convert("RGBA")
-    heat = Image.fromarray(np.uint8(cam * 255), mode="L").resize(image.size)
-    red = Image.new("RGBA", image.size, (255, 0, 0, 0))
-    red.putalpha(heat.point(lambda value: int(value * 0.45)))
-    return Image.alpha_composite(image, red).convert("RGB")
+    image_rgb = image.convert("RGB")
+    heatmap = apply_jet_colormap(cam)
+    heatmap = heatmap.resize(image_rgb.size, Image.Resampling.BILINEAR)
+    return Image.blend(image_rgb, heatmap, alpha=0.45)
+
+
+def apply_jet_colormap(cam: np.ndarray) -> Image.Image:
+    values = np.clip(cam.astype(np.float32), 0.0, 1.0)
+    r = np.clip(1.5 - np.abs(4.0 * values - 3.0), 0.0, 1.0)
+    g = np.clip(1.5 - np.abs(4.0 * values - 2.0), 0.0, 1.0)
+    b = np.clip(1.5 - np.abs(4.0 * values - 1.0), 0.0, 1.0)
+    rgb = np.stack([r, g, b], axis=-1)
+    return Image.fromarray(np.uint8(rgb * 255), mode="RGB")
 
 
 def threshold_heatmap(cam: np.ndarray, threshold: float) -> np.ndarray:
@@ -618,12 +627,13 @@ def load_roi_mask(mask_root: Path | None, split: str, image_name: str, size: Tup
     return mask, mask_path.as_posix()
 
 
-def apply_roi_to_cam(cam: np.ndarray, roi_mask: np.ndarray) -> np.ndarray:
-    masked = cam * roi_mask
-    maximum = float(masked.max())
-    if maximum <= 0.0:
-        return masked
-    return masked / maximum
+def apply_roi_to_tensor(tensor: torch.Tensor, roi_mask: np.ndarray, device: torch.device) -> torch.Tensor:
+    mask_tensor = torch.from_numpy(roi_mask).to(device=device, dtype=tensor.dtype).unsqueeze(0)
+    mean = torch.tensor([0.485, 0.456, 0.406], device=device, dtype=tensor.dtype)[:, None, None]
+    std = torch.tensor([0.229, 0.224, 0.225], device=device, dtype=tensor.dtype)[:, None, None]
+    image = torch.clamp(tensor * std + mean, 0, 1)
+    masked_image = image * mask_tensor
+    return (masked_image - mean) / std
 
 
 def connected_components(mask: np.ndarray, min_area: int, max_components: int) -> List[Dict[str, float | int]]:
@@ -729,29 +739,44 @@ def slugify(value: str) -> str:
 
 def select_heatmap_targets(
     target_mode: str,
-    probs: torch.Tensor,
+    row: Dict[str, str],
     intersect_map: List[Tuple[int, str, str]],
-    threshold: float,
 ) -> List[Tuple[int, str]]:
     if target_mode == "all":
         return [(model_idx, dataset_name) for model_idx, dataset_name, _ in intersect_map]
 
-    scores = [(model_idx, dataset_name, float(probs[model_idx].item())) for model_idx, dataset_name, _ in intersect_map]
     if target_mode == "top1":
-        model_idx, dataset_name, _ = max(scores, key=lambda item: item[2])
-        return [(model_idx, dataset_name)]
+        top1_label = row["top1_label"]
+        return [
+            (model_idx, dataset_name)
+            for model_idx, dataset_name, _ in intersect_map
+            if dataset_name == top1_label
+        ]
 
-    selected = [(model_idx, dataset_name) for model_idx, dataset_name, score in scores if score >= threshold]
+    predicted_labels = {label for label in row["predicted_labels"].split("|") if label}
+    selected = [
+        (model_idx, dataset_name)
+        for model_idx, dataset_name, _ in intersect_map
+        if dataset_name in predicted_labels
+    ]
     if selected:
         return selected
 
-    model_idx, dataset_name, _ = max(scores, key=lambda item: item[2])
-    return [(model_idx, dataset_name)]
+    top1_label = row["top1_label"]
+    return [
+        (model_idx, dataset_name)
+        for model_idx, dataset_name, _ in intersect_map
+        if dataset_name == top1_label
+    ]
+
+
+def row_probability(row: Dict[str, str], class_name: str) -> float:
+    return float(row.get(f"prob_{class_name}", "0") or 0.0)
 
 
 def save_heatmap_outputs(
     model: torch.nn.Module,
-    image_records: List[Tuple[str, Path]],
+    image_records: List[Tuple[str, str, Path]],
     rows: List[Dict[str, str]],
     intersect_map: List[Tuple[int, str, str]],
     transform: transforms.Compose,
@@ -762,7 +787,6 @@ def save_heatmap_outputs(
     min_component_area: int,
     max_components: int,
     target_mode: str,
-    roi_mask_root: Path | None,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     overlays_dir = output_dir / "overlays"
@@ -777,22 +801,21 @@ def save_heatmap_outputs(
     cam_generator = GradCAM(model, model.features.denseblock4)
     index_rows: List[Dict[str, str]] = []
     component_rows: List[Dict[str, str | int | float]] = []
-    row_by_key = {f"{row['split']}/{row['image']}": row for row in rows}
+    row_by_key = {f"{row['split']}/{row['sample_id']}": row for row in rows}
 
     model.eval()
     with torch.enable_grad():
-        for image_index, (split, image_path) in enumerate(image_records):
-            image_key = f"{split}/{image_path.name}"
+        for image_index, (split, sample_id, image_path) in enumerate(image_records):
+            image_key = f"{split}/{sample_id}"
             row = row_by_key[image_key]
 
             with Image.open(image_path) as img:
                 tensor = transform(img.convert("RGB")).unsqueeze(0).to(device)
-                original = denormalize_tensor(tensor[0])
-            roi_mask, roi_mask_file = load_roi_mask(roi_mask_root, split, image_path.name, original.size)
+            original = denormalize_tensor(tensor[0])
 
             logits = model(tensor)
-            probs = torch.sigmoid(logits).squeeze(0).detach().cpu()
-            targets = select_heatmap_targets(target_mode, probs, intersect_map, threshold)
+            _ = torch.sigmoid(logits).squeeze(0).detach().cpu()
+            targets = select_heatmap_targets(target_mode, row, intersect_map)
 
             heatmap_files: List[str] = []
             bbox_values: List[str] = []
@@ -801,20 +824,22 @@ def save_heatmap_outputs(
 
             for model_idx, class_name in targets:
                 cam = cam_generator(tensor, model_idx)
-                cam = apply_roi_to_cam(cam, roi_mask)
-                mask = threshold_heatmap(cam, heatmap_threshold)
-                components = connected_components(mask, min_component_area, max_components)
                 local_class_idx = next(
                     local_idx
                     for local_idx, (candidate_model_idx, _, _) in enumerate(intersect_map)
                     if candidate_model_idx == model_idx
                 )
-                probability = float(probs[model_idx].item())
+                probability = row_probability(row, class_name)
 
                 split_slug = slugify(split)
-                stem_slug = slugify(image_path.stem)
+                stem_slug = slugify(Path(sample_id).stem)
+                sample_slug = slugify(sample_id.replace("/", "_"))
                 class_slug = slugify(class_name)
-                file_stem = f"{image_index:04d}_{split_slug}_{stem_slug}_{class_slug}"
+                file_stem = f"{image_index:04d}_{split_slug}_{sample_slug}_{class_slug}"
+
+                mask = threshold_heatmap(cam, heatmap_threshold)
+                components = connected_components(mask, min_component_area, max_components)
+
                 overlay_path = overlays_dir / f"{file_stem}_heatmap.jpg"
                 mask_path = masks_dir / f"{file_stem}_mask.png"
                 bbox_path = bboxes_dir / f"{file_stem}_bbox.jpg"
@@ -854,6 +879,7 @@ def save_heatmap_outputs(
                         {
                             "split": split,
                             "image": image_path.name,
+                            "sample_id": sample_id,
                             "class_id": local_class_idx,
                             "class_name": class_name,
                             "probability": f"{probability:.6f}",
@@ -870,11 +896,11 @@ def save_heatmap_outputs(
                     )
 
                 largest_bbox = component_to_xywh(largest) if largest else ""
-
                 index_rows.append(
                     {
                         "split": split,
                         "image": image_path.name,
+                        "sample_id": sample_id,
                         "class_id": str(local_class_idx),
                         "class_name": class_name,
                         "probability": f"{probability:.6f}",
@@ -882,7 +908,6 @@ def save_heatmap_outputs(
                         "heatmap_threshold": f"{heatmap_threshold:.4f}",
                         "overlay_file": relative_overlay,
                         "mask_file": relative_mask,
-                        "roi_mask_file": roi_mask_file,
                         "bbox_file": relative_bbox,
                         "component_count": str(len(components)),
                         "largest_component_bbox_xywh": largest_bbox,
@@ -893,7 +918,7 @@ def save_heatmap_outputs(
 
             yolo_split_dir = yolo_labels_dir / slugify(split)
             yolo_split_dir.mkdir(parents=True, exist_ok=True)
-            yolo_label_path = yolo_split_dir / f"{slugify(image_path.stem)}.txt"
+            yolo_label_path = yolo_split_dir / f"{slugify(sample_id.replace('/', '_'))}.txt"
             yolo_label_path.write_text("\n".join(yolo_label_lines) + ("\n" if yolo_label_lines else ""), encoding="utf-8")
 
             row["heatmap_files"] = "|".join(heatmap_files)
@@ -910,6 +935,7 @@ def save_heatmap_outputs(
     with (output_dir / "heatmap_index.csv").open("w", newline="", encoding="utf-8") as handle:
         fieldnames = [
             "split",
+            "sample_id",
             "image",
             "class_id",
             "class_name",
@@ -918,7 +944,6 @@ def save_heatmap_outputs(
             "heatmap_threshold",
             "overlay_file",
             "mask_file",
-            "roi_mask_file",
             "bbox_file",
             "component_count",
             "largest_component_bbox_xywh",
@@ -932,6 +957,7 @@ def save_heatmap_outputs(
     with (output_dir / "heatmap_components.csv").open("w", newline="", encoding="utf-8") as handle:
         fieldnames = [
             "split",
+            "sample_id",
             "image",
             "class_id",
             "class_name",
@@ -960,11 +986,12 @@ def save_heatmap_outputs(
 @torch.inference_mode()
 def run_inference(
     model: torch.nn.Module,
-    image_records: List[Tuple[str, Path]],
+    image_records: List[Tuple[str, str, Path]],
     intersect_map: List[Tuple[int, str, str]],
     transform: transforms.Compose,
     device: torch.device,
     threshold: float,
+    roi_mask_root: Path | None,
 ) -> Tuple[List[Dict[str, str]], Dict[str, List[int]]]:
     if not intersect_map:
         raise ValueError("No intersected classes found between dataset names and model classes.")
@@ -973,10 +1000,13 @@ def run_inference(
     pred_vectors: Dict[str, List[int]] = {}
     model.eval()
 
-    for split, image_path in image_records:
+    for split, sample_id, image_path in image_records:
         with Image.open(image_path) as img:
             img = img.convert("RGB")
             tensor = transform(img).unsqueeze(0).to(device)
+
+        roi_mask, roi_mask_file = load_roi_mask(roi_mask_root, split, image_path.name, (tensor.shape[-1], tensor.shape[-2]))
+        tensor = apply_roi_to_tensor(tensor.squeeze(0), roi_mask, device).unsqueeze(0)
 
         logits = model(tensor)
         probs = torch.sigmoid(logits).squeeze(0).detach().cpu()
@@ -999,24 +1029,26 @@ def run_inference(
 
         row: Dict[str, str] = {
             "split": split,
+            "sample_id": sample_id,
             "image": image_path.name,
             "top1_label": top_label,
             "top1_score": f"{top_score:.6f}",
             "predicted_labels": "|".join(positive_labels),
+            "roi_mask_file": roi_mask_file,
         }
 
         for model_idx, dataset_display_name, _ in intersect_map:
             row[f"prob_{dataset_display_name}"] = f"{float(probs[model_idx]):.6f}"
 
         results.append(row)
-        pred_vectors[f"{split}/{image_path.name}"] = pred_vector
+        pred_vectors[f"{split}/{sample_id}"] = pred_vector
 
     return results, pred_vectors
 
 
 def save_csv(rows: List[Dict[str, str]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = list(rows[0].keys()) if rows else ["split", "image", "top1_label", "top1_score", "predicted_labels"]
+    fieldnames = list(rows[0].keys()) if rows else ["split", "sample_id", "image", "top1_label", "top1_score", "predicted_labels"]
 
     with output_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -1083,6 +1115,7 @@ def main() -> None:
         transform=transform,
         device=device,
         threshold=args.threshold,
+        roi_mask_root=None if args.no_roi_mask else args.roi_mask_root,
     )
 
     gt_vectors = load_ground_truth_vectors(
@@ -1113,7 +1146,6 @@ def main() -> None:
             min_component_area=args.min_component_area,
             max_components=args.max_components,
             target_mode=args.heatmap_target_classes,
-            roi_mask_root=None if args.no_roi_mask else args.roi_mask_root,
         )
 
     save_csv(rows, args.output_csv)

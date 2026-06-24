@@ -41,13 +41,13 @@ To also generate Grad-CAM heatmaps and weak-localization bounding boxes for infe
 python inference/inference.py --checkpoint model.pth.tar --data-root "Splitted dataset" --generate-heatmaps
 ```
 
-By default, heatmaps and bounding boxes are restricted to the lung ROI masks in:
+By default, inference loads `train`, `valid`, and `test`, and applies lung ROI masks before the model forward pass from:
 
 ```text
 lung segmentation/output_masks/
 ```
 
-Use `--no-roi-mask` to disable ROI masking.
+Use `--no-roi-mask` to disable ROI masking for inference. Grad-CAM heatmaps and bounding boxes are generated from the original image, using the inferred classes as targets.
 
 Heatmap outputs are written to:
 
@@ -58,6 +58,7 @@ inference/heatmaps/
 The heatmap output includes overlay images, mask images, bounding-box overlay images, CSV metadata, and YOLO-style label files:
 
 ```text
+inference/heatmaps/
 inference/heatmaps/yolo_labels/
 ```
 
