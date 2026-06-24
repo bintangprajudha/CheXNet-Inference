@@ -1,11 +1,81 @@
-output_file,filename,predicted_class,probability,ground_truth_labels
-0000_CXR075_001_infiltrat.jpg,CXR075_001.jpg,infiltrat,0.626640,kavitas|infiltrat|atelektasis
-0001_CXR075_002_infiltrat.jpg,CXR075_002.jpg,infiltrat,0.622869,kavitas|infiltrat|atelektasis
-0002_CXR072_001_infiltrat.jpg,CXR072_001.jpg,infiltrat,0.744185,kavitas|infiltrat|efusi pleura
-0003_CXR070_001_infiltrat.jpg,CXR070_001.jpg,infiltrat,0.786418,kavitas|infiltrat
-0004_CXR070_002_infiltrat.jpg,CXR070_002.jpg,infiltrat,0.514224,infiltrat
-0005_CXR070_003_infiltrat.jpg,CXR070_003.jpg,infiltrat,0.711132,infiltrat
-0006_CXR071_001_infiltrat.jpg,CXR071_001.jpg,infiltrat,0.323058,infiltrat
-0007_CXR073_001_kavitas.jpg,CXR073_001.jpg,kavitas,0.821438,kavitas|infiltrat
-0008_CXR073_002_infiltrat.jpg,CXR073_002.jpg,infiltrat,0.813269,infiltrat
-0009_CXR073_003_infiltrat.jpg,CXR073_003.jpg,infiltrat,0.635843,infiltrat
+output_file,mask_file,cca_file,filename,predicted_class,probability,class_threshold,heatmap_threshold,target_mode,component_count,largest_component_area,largest_component_bbox_xywh,ground_truth_labels
+0000_CXR075_001_kavitas.jpg,masks\0000_CXR075_001_kavitas_mask_t0.50.png,cca\0000_CXR075_001_kavitas_cca.jpg,CXR075_001.jpg,kavitas,0.324681,0.7000,0.5000,all,2,1040,"0,88,32,40",kavitas|infiltrat|atelektasis
+0000_CXR075_001_infiltrat.jpg,masks\0000_CXR075_001_infiltrat_mask_t0.50.png,cca\0000_CXR075_001_infiltrat_cca.jpg,CXR075_001.jpg,infiltrat,0.626698,0.1000,0.5000,all,3,4946,"130,50,62,110",kavitas|infiltrat|atelektasis
+0000_CXR075_001_limfadenopati.jpg,masks\0000_CXR075_001_limfadenopati_mask_t0.50.png,cca\0000_CXR075_001_limfadenopati_cca.jpg,CXR075_001.jpg,limfadenopati,0.000667,0.1000,0.5000,all,1,925,"0,0,32,32",kavitas|infiltrat|atelektasis
+0000_CXR075_001_tuberkuloma.jpg,masks\0000_CXR075_001_tuberkuloma_mask_t0.50.png,cca\0000_CXR075_001_tuberkuloma_cca.jpg,CXR075_001.jpg,tuberkuloma,0.352200,0.1000,0.5000,all,1,3562,"125,61,62,89",kavitas|infiltrat|atelektasis
+0000_CXR075_001_bronkiektasis.jpg,masks\0000_CXR075_001_bronkiektasis_mask_t0.50.png,cca\0000_CXR075_001_bronkiektasis_cca.jpg,CXR075_001.jpg,bronkiektasis,0.001115,0.1000,0.5000,all,1,925,"0,0,32,32",kavitas|infiltrat|atelektasis
+0000_CXR075_001_pneumothorax.jpg,masks\0000_CXR075_001_pneumothorax_mask_t0.50.png,cca\0000_CXR075_001_pneumothorax_cca.jpg,CXR075_001.jpg,pneumothorax,0.241597,0.2500,0.5000,all,1,4034,"107,65,80,76",kavitas|infiltrat|atelektasis
+0000_CXR075_001_efusi_pleura.jpg,masks\0000_CXR075_001_efusi_pleura_mask_t0.50.png,cca\0000_CXR075_001_efusi_pleura_cca.jpg,CXR075_001.jpg,efusi pleura,0.837113,0.8000,0.5000,all,1,8628,"33,44,144,93",kavitas|infiltrat|atelektasis
+0000_CXR075_001_atelektasis.jpg,masks\0000_CXR075_001_atelektasis_mask_t0.50.png,cca\0000_CXR075_001_atelektasis_cca.jpg,CXR075_001.jpg,atelektasis,0.574885,0.5500,0.5000,all,1,7173,"22,28,100,90",kavitas|infiltrat|atelektasis
+0001_CXR075_002_kavitas.jpg,masks\0001_CXR075_002_kavitas_mask_t0.50.png,cca\0001_CXR075_002_kavitas_cca.jpg,CXR075_002.jpg,kavitas,0.394148,0.7000,0.5000,all,1,2863,"0,32,32,96",kavitas|infiltrat|atelektasis
+0001_CXR075_002_infiltrat.jpg,masks\0001_CXR075_002_infiltrat_mask_t0.50.png,cca\0001_CXR075_002_infiltrat_cca.jpg,CXR075_002.jpg,infiltrat,0.622771,0.1000,0.5000,all,2,7903,"0,0,145,74",kavitas|infiltrat|atelektasis
+0001_CXR075_002_limfadenopati.jpg,masks\0001_CXR075_002_limfadenopati_mask_t0.50.png,cca\0001_CXR075_002_limfadenopati_cca.jpg,CXR075_002.jpg,limfadenopati,0.000743,0.1000,0.5000,all,1,1922,"0,0,32,64",kavitas|infiltrat|atelektasis
+0001_CXR075_002_tuberkuloma.jpg,masks\0001_CXR075_002_tuberkuloma_mask_t0.50.png,cca\0001_CXR075_002_tuberkuloma_cca.jpg,CXR075_002.jpg,tuberkuloma,0.215322,0.1000,0.5000,all,1,2288,"145,68,52,73",kavitas|infiltrat|atelektasis
+0001_CXR075_002_bronkiektasis.jpg,masks\0001_CXR075_002_bronkiektasis_mask_t0.50.png,cca\0001_CXR075_002_bronkiektasis_cca.jpg,CXR075_002.jpg,bronkiektasis,0.001331,0.1000,0.5000,all,1,1901,"0,0,32,63",kavitas|infiltrat|atelektasis
+0001_CXR075_002_pneumothorax.jpg,masks\0001_CXR075_002_pneumothorax_mask_t0.50.png,cca\0001_CXR075_002_pneumothorax_cca.jpg,CXR075_002.jpg,pneumothorax,0.118573,0.2500,0.5000,all,1,3761,"136,58,67,89",kavitas|infiltrat|atelektasis
+0001_CXR075_002_efusi_pleura.jpg,masks\0001_CXR075_002_efusi_pleura_mask_t0.50.png,cca\0001_CXR075_002_efusi_pleura_cca.jpg,CXR075_002.jpg,efusi pleura,0.783485,0.8000,0.5000,all,2,7522,"29,52,113,95",kavitas|infiltrat|atelektasis
+0001_CXR075_002_atelektasis.jpg,masks\0001_CXR075_002_atelektasis_mask_t0.50.png,cca\0001_CXR075_002_atelektasis_cca.jpg,CXR075_002.jpg,atelektasis,0.535056,0.5500,0.5000,all,1,7258,"35,32,101,95",kavitas|infiltrat|atelektasis
+0002_CXR072_001_kavitas.jpg,masks\0002_CXR072_001_kavitas_mask_t0.50.png,cca\0002_CXR072_001_kavitas_cca.jpg,CXR072_001.jpg,kavitas,0.638924,0.7000,0.5000,all,1,10471,"63,51,126,113",kavitas|infiltrat|efusi pleura
+0002_CXR072_001_infiltrat.jpg,masks\0002_CXR072_001_infiltrat_mask_t0.50.png,cca\0002_CXR072_001_infiltrat_cca.jpg,CXR072_001.jpg,infiltrat,0.744245,0.1000,0.5000,all,1,9961,"71,68,123,114",kavitas|infiltrat|efusi pleura
+0002_CXR072_001_limfadenopati.jpg,masks\0002_CXR072_001_limfadenopati_mask_t0.50.png,cca\0002_CXR072_001_limfadenopati_cca.jpg,CXR072_001.jpg,limfadenopati,0.002028,0.1000,0.5000,all,1,836,"64,0,32,32",kavitas|infiltrat|efusi pleura
+0002_CXR072_001_tuberkuloma.jpg,masks\0002_CXR072_001_tuberkuloma_mask_t0.50.png,cca\0002_CXR072_001_tuberkuloma_cca.jpg,CXR072_001.jpg,tuberkuloma,0.544732,0.1000,0.5000,all,2,10818,"101,36,123,125",kavitas|infiltrat|efusi pleura
+0002_CXR072_001_bronkiektasis.jpg,masks\0002_CXR072_001_bronkiektasis_mask_t0.50.png,cca\0002_CXR072_001_bronkiektasis_cca.jpg,CXR072_001.jpg,bronkiektasis,0.001995,0.1000,0.5000,all,1,836,"64,0,32,32",kavitas|infiltrat|efusi pleura
+0002_CXR072_001_pneumothorax.jpg,masks\0002_CXR072_001_pneumothorax_mask_t0.50.png,cca\0002_CXR072_001_pneumothorax_cca.jpg,CXR072_001.jpg,pneumothorax,0.362659,0.2500,0.5000,all,2,6173,"158,51,66,111",kavitas|infiltrat|efusi pleura
+0002_CXR072_001_efusi_pleura.jpg,masks\0002_CXR072_001_efusi_pleura_mask_t0.50.png,cca\0002_CXR072_001_efusi_pleura_cca.jpg,CXR072_001.jpg,efusi pleura,0.417439,0.8000,0.5000,all,1,5863,"17,136,89,88",kavitas|infiltrat|efusi pleura
+0002_CXR072_001_atelektasis.jpg,masks\0002_CXR072_001_atelektasis_mask_t0.50.png,cca\0002_CXR072_001_atelektasis_cca.jpg,CXR072_001.jpg,atelektasis,0.789946,0.5500,0.5000,all,1,16675,"0,40,224,137",kavitas|infiltrat|efusi pleura
+0003_CXR070_001_kavitas.jpg,masks\0003_CXR070_001_kavitas_mask_t0.50.png,cca\0003_CXR070_001_kavitas_cca.jpg,CXR070_001.jpg,kavitas,0.677212,0.7000,0.5000,all,1,6491,"17,35,87,109",kavitas|infiltrat
+0003_CXR070_001_infiltrat.jpg,masks\0003_CXR070_001_infiltrat_mask_t0.50.png,cca\0003_CXR070_001_infiltrat_cca.jpg,CXR070_001.jpg,infiltrat,0.786501,0.1000,0.5000,all,1,12177,"0,38,140,130",kavitas|infiltrat
+0003_CXR070_001_limfadenopati.jpg,masks\0003_CXR070_001_limfadenopati_mask_t0.50.png,cca\0003_CXR070_001_limfadenopati_cca.jpg,CXR070_001.jpg,limfadenopati,0.000215,0.1000,0.5000,all,2,836,"64,0,32,32",kavitas|infiltrat
+0003_CXR070_001_tuberkuloma.jpg,masks\0003_CXR070_001_tuberkuloma_mask_t0.50.png,cca\0003_CXR070_001_tuberkuloma_cca.jpg,CXR070_001.jpg,tuberkuloma,0.613942,0.1000,0.5000,all,1,6023,"64,86,103,75",kavitas|infiltrat
+0003_CXR070_001_bronkiektasis.jpg,masks\0003_CXR070_001_bronkiektasis_mask_t0.50.png,cca\0003_CXR070_001_bronkiektasis_cca.jpg,CXR070_001.jpg,bronkiektasis,0.000321,0.1000,0.5000,all,1,836,"64,0,32,32",kavitas|infiltrat
+0003_CXR070_001_pneumothorax.jpg,masks\0003_CXR070_001_pneumothorax_mask_t0.50.png,cca\0003_CXR070_001_pneumothorax_cca.jpg,CXR070_001.jpg,pneumothorax,0.248235,0.2500,0.5000,all,1,2543,"124,98,49,73",kavitas|infiltrat
+0003_CXR070_001_efusi_pleura.jpg,masks\0003_CXR070_001_efusi_pleura_mask_t0.50.png,cca\0003_CXR070_001_efusi_pleura_cca.jpg,CXR070_001.jpg,efusi pleura,0.502813,0.8000,0.5000,all,1,4875,"0,43,108,89",kavitas|infiltrat
+0003_CXR070_001_atelektasis.jpg,masks\0003_CXR070_001_atelektasis_mask_t0.50.png,cca\0003_CXR070_001_atelektasis_cca.jpg,CXR070_001.jpg,atelektasis,0.245564,0.5500,0.5000,all,3,2518,"170,160,54,64",kavitas|infiltrat
+0004_CXR070_002_kavitas.jpg,masks\0004_CXR070_002_kavitas_mask_t0.50.png,cca\0004_CXR070_002_kavitas_cca.jpg,CXR070_002.jpg,kavitas,0.432845,0.7000,0.5000,all,2,2535,"0,71,43,84",infiltrat
+0004_CXR070_002_infiltrat.jpg,masks\0004_CXR070_002_infiltrat_mask_t0.50.png,cca\0004_CXR070_002_infiltrat_cca.jpg,CXR070_002.jpg,infiltrat,0.514230,0.1000,0.5000,all,1,2895,"0,119,70,56",infiltrat
+0004_CXR070_002_limfadenopati.jpg,masks\0004_CXR070_002_limfadenopati_mask_t0.50.png,cca\0004_CXR070_002_limfadenopati_cca.jpg,CXR070_002.jpg,limfadenopati,0.000068,0.1000,0.5000,all,1,925,"0,0,32,32",infiltrat
+0004_CXR070_002_tuberkuloma.jpg,masks\0004_CXR070_002_tuberkuloma_mask_t0.50.png,cca\0004_CXR070_002_tuberkuloma_cca.jpg,CXR070_002.jpg,tuberkuloma,0.593639,0.1000,0.5000,all,1,8225,"27,30,100,95",infiltrat
+0004_CXR070_002_bronkiektasis.jpg,masks\0004_CXR070_002_bronkiektasis_mask_t0.50.png,cca\0004_CXR070_002_bronkiektasis_cca.jpg,CXR070_002.jpg,bronkiektasis,0.000135,0.1000,0.5000,all,1,925,"192,0,32,32",infiltrat
+0004_CXR070_002_pneumothorax.jpg,masks\0004_CXR070_002_pneumothorax_mask_t0.50.png,cca\0004_CXR070_002_pneumothorax_cca.jpg,CXR070_002.jpg,pneumothorax,0.347904,0.2500,0.5000,all,1,3812,"29,31,92,57",infiltrat
+0004_CXR070_002_efusi_pleura.jpg,masks\0004_CXR070_002_efusi_pleura_mask_t0.50.png,cca\0004_CXR070_002_efusi_pleura_cca.jpg,CXR070_002.jpg,efusi pleura,0.675679,0.8000,0.5000,all,1,6721,"17,29,124,75",infiltrat
+0004_CXR070_002_atelektasis.jpg,masks\0004_CXR070_002_atelektasis_mask_t0.50.png,cca\0004_CXR070_002_atelektasis_cca.jpg,CXR070_002.jpg,atelektasis,0.509301,0.5500,0.5000,all,1,2669,"32,33,41,97",infiltrat
+0005_CXR070_003_kavitas.jpg,masks\0005_CXR070_003_kavitas_mask_t0.50.png,cca\0005_CXR070_003_kavitas_cca.jpg,CXR070_003.jpg,kavitas,0.539050,0.7000,0.5000,all,1,2658,"0,26,53,75",infiltrat
+0005_CXR070_003_infiltrat.jpg,masks\0005_CXR070_003_infiltrat_mask_t0.50.png,cca\0005_CXR070_003_infiltrat_cca.jpg,CXR070_003.jpg,infiltrat,0.711074,0.1000,0.5000,all,1,11863,"0,42,120,124",infiltrat
+0005_CXR070_003_limfadenopati.jpg,masks\0005_CXR070_003_limfadenopati_mask_t0.50.png,cca\0005_CXR070_003_limfadenopati_cca.jpg,CXR070_003.jpg,limfadenopati,0.000364,0.1000,0.5000,all,1,836,"160,0,32,32",infiltrat
+0005_CXR070_003_tuberkuloma.jpg,masks\0005_CXR070_003_tuberkuloma_mask_t0.50.png,cca\0005_CXR070_003_tuberkuloma_cca.jpg,CXR070_003.jpg,tuberkuloma,0.626896,0.1000,0.5000,all,1,7921,"0,40,131,103",infiltrat
+0005_CXR070_003_bronkiektasis.jpg,masks\0005_CXR070_003_bronkiektasis_mask_t0.50.png,cca\0005_CXR070_003_bronkiektasis_cca.jpg,CXR070_003.jpg,bronkiektasis,0.000661,0.1000,0.5000,all,1,836,"160,0,32,32",infiltrat
+0005_CXR070_003_pneumothorax.jpg,masks\0005_CXR070_003_pneumothorax_mask_t0.50.png,cca\0005_CXR070_003_pneumothorax_cca.jpg,CXR070_003.jpg,pneumothorax,0.246578,0.2500,0.5000,all,1,3799,"96,101,88,66",infiltrat
+0005_CXR070_003_efusi_pleura.jpg,masks\0005_CXR070_003_efusi_pleura_mask_t0.50.png,cca\0005_CXR070_003_efusi_pleura_cca.jpg,CXR070_003.jpg,efusi pleura,0.572865,0.8000,0.5000,all,1,6596,"0,26,97,100",infiltrat
+0005_CXR070_003_atelektasis.jpg,masks\0005_CXR070_003_atelektasis_mask_t0.50.png,cca\0005_CXR070_003_atelektasis_cca.jpg,CXR070_003.jpg,atelektasis,0.316550,0.5500,0.5000,all,2,836,"0,160,32,32",infiltrat
+0006_CXR071_001_kavitas.jpg,masks\0006_CXR071_001_kavitas_mask_t0.50.png,cca\0006_CXR071_001_kavitas_cca.jpg,CXR071_001.jpg,kavitas,0.185110,0.7000,0.5000,all,1,4923,"88,0,107,61",infiltrat
+0006_CXR071_001_infiltrat.jpg,masks\0006_CXR071_001_infiltrat_mask_t0.50.png,cca\0006_CXR071_001_infiltrat_cca.jpg,CXR071_001.jpg,infiltrat,0.322750,0.1000,0.5000,all,1,3944,"100,0,101,50",infiltrat
+0006_CXR071_001_limfadenopati.jpg,masks\0006_CXR071_001_limfadenopati_mask_t0.50.png,cca\0006_CXR071_001_limfadenopati_cca.jpg,CXR071_001.jpg,limfadenopati,0.000001,0.1000,0.5000,all,0,,,infiltrat
+0006_CXR071_001_tuberkuloma.jpg,masks\0006_CXR071_001_tuberkuloma_mask_t0.50.png,cca\0006_CXR071_001_tuberkuloma_cca.jpg,CXR071_001.jpg,tuberkuloma,0.046879,0.1000,0.5000,all,1,1301,"188,0,36,42",infiltrat
+0006_CXR071_001_bronkiektasis.jpg,masks\0006_CXR071_001_bronkiektasis_mask_t0.50.png,cca\0006_CXR071_001_bronkiektasis_cca.jpg,CXR071_001.jpg,bronkiektasis,0.000001,0.1000,0.5000,all,0,,,infiltrat
+0006_CXR071_001_pneumothorax.jpg,masks\0006_CXR071_001_pneumothorax_mask_t0.50.png,cca\0006_CXR071_001_pneumothorax_cca.jpg,CXR071_001.jpg,pneumothorax,0.014438,0.2500,0.5000,all,2,925,"192,0,32,32",infiltrat
+0006_CXR071_001_efusi_pleura.jpg,masks\0006_CXR071_001_efusi_pleura_mask_t0.50.png,cca\0006_CXR071_001_efusi_pleura_cca.jpg,CXR071_001.jpg,efusi pleura,0.293141,0.8000,0.5000,all,3,2984,"171,0,53,82",infiltrat
+0006_CXR071_001_atelektasis.jpg,masks\0006_CXR071_001_atelektasis_mask_t0.50.png,cca\0006_CXR071_001_atelektasis_cca.jpg,CXR071_001.jpg,atelektasis,0.047679,0.5500,0.5000,all,1,1002,"189,0,35,32",infiltrat
+0007_CXR073_001_kavitas.jpg,masks\0007_CXR073_001_kavitas_mask_t0.50.png,cca\0007_CXR073_001_kavitas_cca.jpg,CXR073_001.jpg,kavitas,0.821477,0.7000,0.5000,all,1,13429,"21,24,180,105",kavitas|infiltrat
+0007_CXR073_001_infiltrat.jpg,masks\0007_CXR073_001_infiltrat_mask_t0.50.png,cca\0007_CXR073_001_infiltrat_cca.jpg,CXR073_001.jpg,infiltrat,0.912166,0.1000,0.5000,all,1,13395,"29,24,160,107",kavitas|infiltrat
+0007_CXR073_001_limfadenopati.jpg,masks\0007_CXR073_001_limfadenopati_mask_t0.50.png,cca\0007_CXR073_001_limfadenopati_cca.jpg,CXR073_001.jpg,limfadenopati,0.000202,0.1000,0.5000,all,0,,,kavitas|infiltrat
+0007_CXR073_001_tuberkuloma.jpg,masks\0007_CXR073_001_tuberkuloma_mask_t0.50.png,cca\0007_CXR073_001_tuberkuloma_cca.jpg,CXR073_001.jpg,tuberkuloma,0.366306,0.1000,0.5000,all,1,3938,"69,102,91,76",kavitas|infiltrat
+0007_CXR073_001_bronkiektasis.jpg,masks\0007_CXR073_001_bronkiektasis_mask_t0.50.png,cca\0007_CXR073_001_bronkiektasis_cca.jpg,CXR073_001.jpg,bronkiektasis,0.000187,0.1000,0.5000,all,0,,,kavitas|infiltrat
+0007_CXR073_001_pneumothorax.jpg,masks\0007_CXR073_001_pneumothorax_mask_t0.50.png,cca\0007_CXR073_001_pneumothorax_cca.jpg,CXR073_001.jpg,pneumothorax,0.116396,0.2500,0.5000,all,1,1340,"88,160,63,32",kavitas|infiltrat
+0007_CXR073_001_efusi_pleura.jpg,masks\0007_CXR073_001_efusi_pleura_mask_t0.50.png,cca\0007_CXR073_001_efusi_pleura_cca.jpg,CXR073_001.jpg,efusi pleura,0.137861,0.8000,0.5000,all,2,925,"192,0,32,32",kavitas|infiltrat
+0007_CXR073_001_atelektasis.jpg,masks\0007_CXR073_001_atelektasis_mask_t0.50.png,cca\0007_CXR073_001_atelektasis_cca.jpg,CXR073_001.jpg,atelektasis,0.618285,0.5500,0.5000,all,1,7072,"58,33,108,89",kavitas|infiltrat
+0008_CXR073_002_kavitas.jpg,masks\0008_CXR073_002_kavitas_mask_t0.50.png,cca\0008_CXR073_002_kavitas_cca.jpg,CXR073_002.jpg,kavitas,0.697899,0.7000,0.5000,all,1,11154,"18,0,157,117",infiltrat
+0008_CXR073_002_infiltrat.jpg,masks\0008_CXR073_002_infiltrat_mask_t0.50.png,cca\0008_CXR073_002_infiltrat_cca.jpg,CXR073_002.jpg,infiltrat,0.813245,0.1000,0.5000,all,1,15868,"0,0,188,138",infiltrat
+0008_CXR073_002_limfadenopati.jpg,masks\0008_CXR073_002_limfadenopati_mask_t0.50.png,cca\0008_CXR073_002_limfadenopati_cca.jpg,CXR073_002.jpg,limfadenopati,0.000240,0.1000,0.5000,all,0,,,infiltrat
+0008_CXR073_002_tuberkuloma.jpg,masks\0008_CXR073_002_tuberkuloma_mask_t0.50.png,cca\0008_CXR073_002_tuberkuloma_cca.jpg,CXR073_002.jpg,tuberkuloma,0.203383,0.1000,0.5000,all,3,801,"96,96,32,32",infiltrat
+0008_CXR073_002_bronkiektasis.jpg,masks\0008_CXR073_002_bronkiektasis_mask_t0.50.png,cca\0008_CXR073_002_bronkiektasis_cca.jpg,CXR073_002.jpg,bronkiektasis,0.000234,0.1000,0.5000,all,0,,,infiltrat
+0008_CXR073_002_pneumothorax.jpg,masks\0008_CXR073_002_pneumothorax_mask_t0.50.png,cca\0008_CXR073_002_pneumothorax_cca.jpg,CXR073_002.jpg,pneumothorax,0.085496,0.2500,0.5000,all,0,,,infiltrat
+0008_CXR073_002_efusi_pleura.jpg,masks\0008_CXR073_002_efusi_pleura_mask_t0.50.png,cca\0008_CXR073_002_efusi_pleura_cca.jpg,CXR073_002.jpg,efusi pleura,0.403397,0.8000,0.5000,all,2,1824,"0,35,32,69",infiltrat
+0008_CXR073_002_atelektasis.jpg,masks\0008_CXR073_002_atelektasis_mask_t0.50.png,cca\0008_CXR073_002_atelektasis_cca.jpg,CXR073_002.jpg,atelektasis,0.608817,0.5500,0.5000,all,1,7489,"35,38,96,97",infiltrat
+0009_CXR073_003_kavitas.jpg,masks\0009_CXR073_003_kavitas_mask_t0.50.png,cca\0009_CXR073_003_kavitas_cca.jpg,CXR073_003.jpg,kavitas,0.363799,0.7000,0.5000,all,1,680,"160,160,32,32",infiltrat
+0009_CXR073_003_infiltrat.jpg,masks\0009_CXR073_003_infiltrat_mask_t0.50.png,cca\0009_CXR073_003_infiltrat_cca.jpg,CXR073_003.jpg,infiltrat,0.635705,0.1000,0.5000,all,3,2481,"147,125,50,67",infiltrat
+0009_CXR073_003_limfadenopati.jpg,masks\0009_CXR073_003_limfadenopati_mask_t0.50.png,cca\0009_CXR073_003_limfadenopati_cca.jpg,CXR073_003.jpg,limfadenopati,0.000011,0.1000,0.5000,all,1,925,"0,0,32,32",infiltrat
+0009_CXR073_003_tuberkuloma.jpg,masks\0009_CXR073_003_tuberkuloma_mask_t0.50.png,cca\0009_CXR073_003_tuberkuloma_cca.jpg,CXR073_003.jpg,tuberkuloma,0.330234,0.1000,0.5000,all,2,2676,"120,102,52,78",infiltrat
+0009_CXR073_003_bronkiektasis.jpg,masks\0009_CXR073_003_bronkiektasis_mask_t0.50.png,cca\0009_CXR073_003_bronkiektasis_cca.jpg,CXR073_003.jpg,bronkiektasis,0.000021,0.1000,0.5000,all,1,925,"0,0,32,32",infiltrat
+0009_CXR073_003_pneumothorax.jpg,masks\0009_CXR073_003_pneumothorax_mask_t0.50.png,cca\0009_CXR073_003_pneumothorax_cca.jpg,CXR073_003.jpg,pneumothorax,0.105558,0.2500,0.5000,all,1,1275,"178,157,46,37",infiltrat
+0009_CXR073_003_efusi_pleura.jpg,masks\0009_CXR073_003_efusi_pleura_mask_t0.50.png,cca\0009_CXR073_003_efusi_pleura_cca.jpg,CXR073_003.jpg,efusi pleura,0.588508,0.8000,0.5000,all,2,5769,"18,25,100,83",infiltrat
+0009_CXR073_003_atelektasis.jpg,masks\0009_CXR073_003_atelektasis_mask_t0.50.png,cca\0009_CXR073_003_atelektasis_cca.jpg,CXR073_003.jpg,atelektasis,0.391080,0.5500,0.5000,all,1,5857,"98,74,126,113",infiltrat

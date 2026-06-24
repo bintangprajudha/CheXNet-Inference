@@ -1,6 +1,6 @@
 # Transfer Learning Pipeline
 
-This folder contains the CheXNet/DenseNet121 transfer learning workflow for the RSHS chest X-ray dataset. It is separate from the existing root inference workflow.
+This folder contains the CheXNet/DenseNet121 transfer learning workflow for the RSHS chest X-ray dataset. It is separate from the existing inference workflow in `inference/`.
 
 ## Dataset Formats
 
@@ -50,10 +50,13 @@ python transfer_learning/gradcam.py \
   --checkpoint outputs/transfer_learning/final_model.pth \
   --thresholds outputs/transfer_learning/thresholds.json \
   --output-dir outputs/transfer_learning/gradcam \
-  --num-samples 20
+  --num-samples 20 \
+  --heatmap-threshold 0.5 \
+  --min-component-area 25 \
+  --target-classes all
 ```
 
-Grad-CAM heatmaps are weak localization and explainability outputs. They are not final bounding-box detections.
+Grad-CAM writes the raw overlay, a thresholded heatmap mask, and a CCA overlay. CCA uses the thresholded heatmap to find connected components and stores component metadata in `gradcam_components.csv`. Grad-CAM/CCA outputs are weak localization and explainability outputs. They are not final bounding-box detections.
 
 ## Detection Conversion
 
@@ -63,6 +66,18 @@ For YOLO-style detection data with `images/<split>` and `labels/<split>`, genera
 python transfer_learning/datasets/convert_detection_to_multilabel.py \
   --data-root "Splitted dataset" \
   --data-yaml "Splitted dataset/data.yaml"
+```
+
+For converting YOLO detection folders into folder-per-class classification splits, use:
+
+```bash
+python transfer_learning/datasets/convert_dataset.py --dataset-dir "Splitted dataset"
+```
+
+For generating a dataset-level bounding-box heatmap, use:
+
+```bash
+python transfer_learning/datasets/bbox_heatmap.py --labels-root "Splitted dataset/labels" --images-root "Splitted dataset/images"
 ```
 
 ## Outputs
@@ -81,4 +96,4 @@ Training writes to `outputs/transfer_learning/`:
 - `test_predictions.csv`
 - `config_used.yaml`
 
-Grad-CAM writes overlays and `gradcam_index.csv` under `outputs/transfer_learning/gradcam/`.
+Grad-CAM writes overlays, threshold masks, CCA overlays, `gradcam_index.csv`, and `gradcam_components.csv` under `outputs/transfer_learning/gradcam/`.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 import numpy as np
 import torch
+import cv2
 from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -30,6 +32,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--split", choices=["train", "val", "valid", "test"], default="test")
     parser.add_argument("--num-samples", type=int, default=20)
     parser.add_argument("--image-size", type=int, default=224)
+    parser.add_argument("--heatmap-threshold", type=float, default=0.5, help="Threshold for binarizing Grad-CAM heatmap before CCA.")
+    parser.add_argument("--min-component-area", type=int, default=25, help="Minimum CCA component area in pixels.")
+    parser.add_argument("--max-components", type=int, default=3, help="Maximum CCA components to draw per image.")
+    parser.add_argument(
+        "--target-classes",
+        choices=["predicted", "positive", "all"],
+        default="predicted",
+        help="Classes to generate Grad-CAM for: predicted threshold-positive classes, ground-truth positive classes, or all classes.",
+    )
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     parser.add_argument("--cpu", action="store_true")
     return parser.parse_args()
@@ -77,6 +88,57 @@ def overlay_heatmap(image: Image.Image, cam: np.ndarray) -> Image.Image:
     return Image.alpha_composite(image, red).convert("RGB")
 
 
+def threshold_heatmap(cam: np.ndarray, threshold: float) -> np.ndarray:
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError("--heatmap-threshold must be between 0.0 and 1.0")
+    return (cam >= threshold).astype(np.uint8)
+
+
+def connected_components(mask: np.ndarray, min_area: int, max_components: int) -> list[dict]:
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    components = []
+    for label_id in range(1, num_labels):
+        x, y, width, height, area = stats[label_id]
+        if int(area) < min_area:
+            continue
+        cx, cy = centroids[label_id]
+        components.append(
+            {
+                "label_id": int(label_id),
+                "x": int(x),
+                "y": int(y),
+                "width": int(width),
+                "height": int(height),
+                "area": int(area),
+                "centroid_x": float(cx),
+                "centroid_y": float(cy),
+            }
+        )
+    components.sort(key=lambda item: item["area"], reverse=True)
+    return components[:max_components]
+
+
+def overlay_cca(image: Image.Image, cam: np.ndarray, mask: np.ndarray, components: list[dict]) -> Image.Image:
+    overlay = np.array(overlay_heatmap(image, cam).convert("RGB"))
+    mask_uint8 = (mask * 255).astype(np.uint8)
+    contours, _ = cv2.findContours(mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(overlay, contours, -1, (255, 255, 0), 2)
+    for component in components:
+        x, y, width, height = component["x"], component["y"], component["width"], component["height"]
+        cv2.rectangle(overlay, (x, y), (x + width, y + height), (0, 255, 255), 2)
+    return Image.fromarray(overlay)
+
+
+def select_target_classes(target_mode: str, probabilities: np.ndarray, thresholds: np.ndarray, labels: torch.Tensor) -> list[int]:
+    if target_mode == "all":
+        return list(range(len(probabilities)))
+    if target_mode == "positive":
+        positives = [idx for idx, value in enumerate(labels.cpu().numpy().astype(int)) if value == 1]
+        return positives or [int(probabilities.argmax())]
+    predicted = np.where(probabilities >= thresholds)[0].tolist()
+    return predicted or [int(probabilities.argmax())]
+
+
 def main() -> None:
     args = parse_args()
     device = choose_device(args)
@@ -91,28 +153,92 @@ def main() -> None:
     loader = DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=collate)
     cam_generator = GradCAM(model, model.features.denseblock4)
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    mask_dir = args.output_dir / "masks"
+    cca_dir = args.output_dir / "cca"
+    mask_dir.mkdir(parents=True, exist_ok=True)
+    cca_dir.mkdir(parents=True, exist_ok=True)
     rows = []
+    component_rows = []
     for idx, batch in enumerate(loader):
         if idx >= args.num_samples:
             break
         image = batch["image"].to(device)
         logits = model(image)
         prob = torch.sigmoid(logits)[0].detach().cpu().numpy()
-        predicted = np.where(prob >= thresholds)[0]
-        class_idx = int(predicted[0] if len(predicted) else prob.argmax())
-        cam = cam_generator(image, class_idx)
         original = denormalize(batch["image"][0])
-        overlay = overlay_heatmap(original, cam)
         stem = Path(batch["filename"][0]).stem
-        out_path = args.output_dir / f"{idx:04d}_{stem}_{class_names[class_idx].replace(' ', '_')}.jpg"
-        overlay.save(out_path)
         true_labels = [name for j, name in enumerate(class_names) if int(batch["labels"][0, j].item()) == 1]
-        rows.append(f"{out_path.name},{batch['filename'][0]},{class_names[class_idx]},{prob[class_idx]:.6f},{'|'.join(true_labels)}")
-    (args.output_dir / "gradcam_index.csv").write_text(
-        "output_file,filename,predicted_class,probability,ground_truth_labels\n" + "\n".join(rows),
-        encoding="utf-8",
+        target_indices = select_target_classes(args.target_classes, prob, thresholds, batch["labels"][0])
+        for class_idx in target_indices:
+            cam = cam_generator(image, class_idx)
+            overlay = overlay_heatmap(original, cam)
+            mask = threshold_heatmap(cam, args.heatmap_threshold)
+            components = connected_components(mask, args.min_component_area, args.max_components)
+            cca_overlay = overlay_cca(original, cam, mask, components)
+            class_slug = class_names[class_idx].replace(" ", "_")
+            out_path = args.output_dir / f"{idx:04d}_{stem}_{class_slug}.jpg"
+            mask_path = mask_dir / f"{idx:04d}_{stem}_{class_slug}_mask_t{args.heatmap_threshold:.2f}.png"
+            cca_path = cca_dir / f"{idx:04d}_{stem}_{class_slug}_cca.jpg"
+            overlay.save(out_path)
+            Image.fromarray((mask * 255).astype(np.uint8), mode="L").save(mask_path)
+            cca_overlay.save(cca_path)
+            largest = components[0] if components else {}
+            rows.append(
+                {
+                    "output_file": out_path.name,
+                    "mask_file": str(mask_path.relative_to(args.output_dir)),
+                    "cca_file": str(cca_path.relative_to(args.output_dir)),
+                    "filename": batch["filename"][0],
+                    "predicted_class": class_names[class_idx],
+                    "probability": f"{prob[class_idx]:.6f}",
+                    "class_threshold": f"{thresholds[class_idx]:.4f}",
+                    "heatmap_threshold": f"{args.heatmap_threshold:.4f}",
+                    "target_mode": args.target_classes,
+                    "component_count": len(components),
+                    "largest_component_area": largest.get("area", ""),
+                    "largest_component_bbox_xywh": (
+                        f"{largest.get('x')},{largest.get('y')},{largest.get('width')},{largest.get('height')}" if largest else ""
+                    ),
+                    "ground_truth_labels": "|".join(true_labels),
+                }
+            )
+            for component_rank, component in enumerate(components, start=1):
+                component_rows.append(
+                    {
+                        "filename": batch["filename"][0],
+                        "predicted_class": class_names[class_idx],
+                        "component_rank": component_rank,
+                        "heatmap_threshold": f"{args.heatmap_threshold:.4f}",
+                        **component,
+                    }
+                )
+    with (args.output_dir / "gradcam_index.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()) if rows else [])
+        if rows:
+            writer.writeheader()
+            writer.writerows(rows)
+    with (args.output_dir / "gradcam_components.csv").open("w", newline="", encoding="utf-8") as handle:
+        fieldnames = [
+            "filename",
+            "predicted_class",
+            "component_rank",
+            "heatmap_threshold",
+            "label_id",
+            "x",
+            "y",
+            "width",
+            "height",
+            "area",
+            "centroid_x",
+            "centroid_y",
+        ]
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(component_rows)
+    print(
+        "Grad-CAM overlays, threshold masks, and CCA overlays saved. "
+        "These heatmaps/components are explainability outputs, not final object detection boxes."
     )
-    print("Grad-CAM overlays saved. These heatmaps are weak localization/explainability outputs, not object detection boxes.")
 
 
 if __name__ == "__main__":
