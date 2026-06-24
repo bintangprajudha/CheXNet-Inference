@@ -1,32 +1,32 @@
 {
   "overall": {
-    "num_images": 311,
-    "exact_match_accuracy": 0.495177,
+    "num_images": 229,
+    "exact_match_accuracy": 0.672489,
     "micro": {
-      "precision": 0.493298,
+      "precision": 0.676471,
       "recall": 0.803493,
-      "f1": 0.611296
+      "f1": 0.734531
     },
     "macro": {
-      "precision": 0.169126,
+      "precision": 0.231947,
       "recall": 0.284254,
-      "f1": 0.211964
+      "f1": 0.255045
     },
     "per_class": {
       "infiltrat": {
         "tp": 181,
-        "fp": 129,
+        "fp": 47,
         "tn": 0,
         "fn": 1,
         "support": 182,
-        "precision": 0.583871,
+        "precision": 0.79386,
         "recall": 0.994505,
-        "f1": 0.735772
+        "f1": 0.882927
       },
       "pneumothorax": {
         "tp": 0,
         "fp": 0,
-        "tn": 305,
+        "tn": 223,
         "fn": 6,
         "support": 6,
         "precision": 0.0,
@@ -35,55 +35,55 @@
       },
       "efusi pleura": {
         "tp": 2,
-        "fp": 36,
-        "tn": 252,
+        "fp": 26,
+        "tn": 180,
         "fn": 21,
         "support": 23,
-        "precision": 0.052632,
+        "precision": 0.071429,
         "recall": 0.086957,
-        "f1": 0.065574
+        "f1": 0.078431
       },
       "atelektasis": {
         "tp": 1,
-        "fp": 24,
-        "tn": 269,
+        "fp": 15,
+        "tn": 196,
         "fn": 17,
         "support": 18,
-        "precision": 0.04,
+        "precision": 0.0625,
         "recall": 0.055556,
-        "f1": 0.046512
+        "f1": 0.058824
       }
     }
   },
   "by_split": {
     "train": {
-      "num_images": 230,
-      "exact_match_accuracy": 0.482609,
+      "num_images": 162,
+      "exact_match_accuracy": 0.685185,
       "micro": {
-        "precision": 0.477193,
+        "precision": 0.686869,
         "recall": 0.839506,
-        "f1": 0.608501
+        "f1": 0.755556
       },
       "macro": {
-        "precision": 0.160994,
+        "precision": 0.228908,
         "recall": 0.275926,
-        "f1": 0.203297
+        "f1": 0.250161
       },
       "per_class": {
         "infiltrat": {
           "tp": 134,
-          "fp": 95,
+          "fp": 27,
           "tn": 0,
           "fn": 1,
           "support": 135,
-          "precision": 0.585153,
+          "precision": 0.832298,
           "recall": 0.992593,
-          "f1": 0.736264
+          "f1": 0.905405
         },
         "pneumothorax": {
           "tp": 0,
           "fp": 0,
-          "tn": 229,
+          "tn": 161,
           "fn": 1,
           "support": 1,
           "precision": 0.0,
@@ -92,18 +92,18 @@
         },
         "efusi pleura": {
           "tp": 2,
-          "fp": 32,
-          "tn": 180,
+          "fp": 22,
+          "tn": 122,
           "fn": 16,
           "support": 18,
-          "precision": 0.058824,
+          "precision": 0.083333,
           "recall": 0.111111,
-          "f1": 0.076923
+          "f1": 0.095238
         },
         "atelektasis": {
           "tp": 0,
-          "fp": 22,
-          "tn": 200,
+          "fp": 13,
+          "tn": 141,
           "fn": 8,
           "support": 8,
           "precision": 0.0,
@@ -113,33 +113,33 @@
       }
     },
     "valid": {
-      "num_images": 63,
-      "exact_match_accuracy": 0.539683,
+      "num_images": 54,
+      "exact_match_accuracy": 0.62963,
       "micro": {
-        "precision": 0.550725,
+        "precision": 0.633333,
         "recall": 0.703704,
-        "f1": 0.617886
+        "f1": 0.666667
       },
       "macro": {
-        "precision": 0.271825,
+        "precision": 0.296296,
         "recall": 0.28125,
-        "f1": 0.235
+        "f1": 0.253297
       },
       "per_class": {
         "infiltrat": {
           "tp": 37,
-          "fp": 26,
+          "fp": 17,
           "tn": 0,
           "fn": 0,
           "support": 37,
-          "precision": 0.587302,
+          "precision": 0.685185,
           "recall": 1.0,
-          "f1": 0.74
+          "f1": 0.813187
         },
         "pneumothorax": {
           "tp": 0,
           "fp": 0,
-          "tn": 58,
+          "tn": 49,
           "fn": 5,
           "support": 5,
           "precision": 0.0,
@@ -149,7 +149,7 @@
         "efusi pleura": {
           "tp": 0,
           "fp": 4,
-          "tn": 55,
+          "tn": 46,
           "fn": 4,
           "support": 4,
           "precision": 0.0,
@@ -159,7 +159,7 @@
         "atelektasis": {
           "tp": 1,
           "fp": 1,
-          "tn": 54,
+          "tn": 45,
           "fn": 7,
           "support": 8,
           "precision": 0.5,
@@ -169,33 +169,33 @@
       }
     },
     "test": {
-      "num_images": 18,
-      "exact_match_accuracy": 0.5,
+      "num_images": 13,
+      "exact_match_accuracy": 0.692308,
       "micro": {
-        "precision": 0.526316,
+        "precision": 0.714286,
         "recall": 0.769231,
-        "f1": 0.625
+        "f1": 0.740741
       },
       "macro": {
-        "precision": 0.138889,
+        "precision": 0.192308,
         "recall": 0.25,
-        "f1": 0.178571
+        "f1": 0.217391
       },
       "per_class": {
         "infiltrat": {
           "tp": 10,
-          "fp": 8,
+          "fp": 3,
           "tn": 0,
           "fn": 0,
           "support": 10,
-          "precision": 0.555556,
+          "precision": 0.769231,
           "recall": 1.0,
-          "f1": 0.714286
+          "f1": 0.869565
         },
         "pneumothorax": {
           "tp": 0,
           "fp": 0,
-          "tn": 18,
+          "tn": 13,
           "fn": 0,
           "support": 0,
           "precision": 0.0,
@@ -205,7 +205,7 @@
         "efusi pleura": {
           "tp": 0,
           "fp": 0,
-          "tn": 17,
+          "tn": 12,
           "fn": 1,
           "support": 1,
           "precision": 0.0,
@@ -215,7 +215,7 @@
         "atelektasis": {
           "tp": 0,
           "fp": 1,
-          "tn": 15,
+          "tn": 10,
           "fn": 2,
           "support": 2,
           "precision": 0.0,

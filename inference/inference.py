@@ -354,7 +354,11 @@ def get_transform(image_size: int) -> transforms.Compose:
     )
 
 
-def collect_images_from_split(split_dir: Path, split_name: str) -> List[Tuple[str, str, Path]]:
+def collect_images_from_split(
+    split_dir: Path,
+    split_name: str,
+    allowed_class_names: set[str] | None = None,
+) -> List[Tuple[str, str, Path]]:
     if not split_dir.exists():
         raise FileNotFoundError(f"Split directory not found: {split_dir}")
 
@@ -362,6 +366,10 @@ def collect_images_from_split(split_dir: Path, split_name: str) -> List[Tuple[st
     for p in sorted(split_dir.rglob("*")):
         if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS:
             sample_id = p.relative_to(split_dir).as_posix()
+            if allowed_class_names is not None:
+                first_part = sample_id.split("/", 1)[0]
+                if first_part not in allowed_class_names:
+                    continue
             image_records.append((split_name, sample_id, p))
 
     if not image_records:
@@ -370,10 +378,14 @@ def collect_images_from_split(split_dir: Path, split_name: str) -> List[Tuple[st
     return image_records
 
 
-def collect_images(data_root: Path, splits: List[str]) -> List[Tuple[str, str, Path]]:
+def collect_images(
+    data_root: Path,
+    splits: List[str],
+    allowed_class_names: set[str] | None = None,
+) -> List[Tuple[str, str, Path]]:
     image_records: List[Tuple[str, str, Path]] = []
     for split in splits:
-        image_records.extend(collect_images_from_split(data_root / split, split))
+        image_records.extend(collect_images_from_split(data_root / split, split, allowed_class_names))
     return image_records
 
 
@@ -381,6 +393,7 @@ def load_ground_truth_vectors(
     data_root: Path,
     splits: List[str],
     intersect_map: List[Tuple[int, str, str]],
+    allowed_class_names: set[str] | None = None,
 ) -> Dict[str, List[int]]:
     """Build ground truth vectors for all unique images by scanning split/class directories."""
     dataset_name_to_local_idx = {
@@ -400,6 +413,8 @@ def load_ground_truth_vectors(
             if not class_dir.is_dir():
                 continue
             class_name = class_dir.name
+            if allowed_class_names is not None and class_name not in allowed_class_names:
+                continue
             local_idx = dataset_name_to_local_idx.get(class_name)
 
             for img_path in class_dir.iterdir():
@@ -1085,6 +1100,9 @@ def main() -> None:
 
     kept_dataset_names = [dataset_name for _, dataset_name, _ in intersect_map]
     print(f"Using intersect classes ({len(kept_dataset_names)}): {kept_dataset_names}")
+    unsupported_dataset_names = [name for name in dataset_class_names if name not in kept_dataset_names]
+    if unsupported_dataset_names:
+        print(f"Ignoring dataset labels not supported by checkpoint ({len(unsupported_dataset_names)}): {unsupported_dataset_names}")
 
     model = build_model(num_classes=num_classes).to(device)
     missing, unexpected = model.load_state_dict(state_dict, strict=False)
@@ -1099,11 +1117,11 @@ def main() -> None:
 
     if args.test_dir is not None:
         splits = ["test"]
-        image_records = collect_images_from_split(args.test_dir, "test")
+        image_records = collect_images_from_split(args.test_dir, "test", set(kept_dataset_names))
         gt_root = args.test_dir.parent
     else:
         splits = args.splits
-        image_records = collect_images(data_root, splits)
+        image_records = collect_images(data_root, splits, set(kept_dataset_names))
         gt_root = data_root
 
     transform = get_transform(args.image_size)
@@ -1122,6 +1140,7 @@ def main() -> None:
         data_root=gt_root,
         splits=splits,
         intersect_map=intersect_map,
+        allowed_class_names=set(kept_dataset_names),
     )
 
     metric_class_names = [dataset_display_name for _, dataset_display_name, _ in intersect_map]
