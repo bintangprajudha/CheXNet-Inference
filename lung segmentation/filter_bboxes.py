@@ -5,6 +5,37 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 import numpy as np
 
+def get_base_image_stem(label_stem: str) -> str:
+    # 1. Strip class prefix if any (case-insensitive)
+    prefixes = [
+        "kavitas_", "infiltrat_", "limfadenopati_", "tuberkuloma_", 
+        "bronkiektasis_", "pneumothorax_", "efusi_pleura_", "efusi pleura_", "atelektasis_", "normal_"
+    ]
+    cleaned = label_stem.lower()
+    for prefix in prefixes:
+        if cleaned.startswith(prefix):
+            cleaned = cleaned[len(prefix):]
+            break
+            
+    # 2. If the cleaned name ends with an image extension (like .jpg, .png, etc.), strip it!
+    # Because of label names like "atelektasis_cxr015_001.jpg.txt", where the label stem is "atelektasis_cxr015_001.jpg"
+    for ext in [".jpg", ".jpeg", ".png", ".bmp"]:
+        if cleaned.endswith(ext):
+            cleaned = cleaned[:-len(ext)]
+            break
+            
+    return cleaned
+
+def find_matching_file(directory: Path, base_stem: str) -> Path:
+    if not directory or not directory.exists():
+        return None
+    base_stem_lower = base_stem.lower()
+    for p in directory.iterdir():
+        if p.is_file():
+            if p.stem.lower() == base_stem_lower:
+                return p
+    return None
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Filter YOLO bounding boxes. Delete a bbox if it does not intersect with the lung segmentation mask."
@@ -12,7 +43,7 @@ def parse_args():
     parser.add_argument(
         "--dataset-dir", "-d",
         type=Path,
-        default=Path(r"c:\Gojii\xray lung\forked\CheXNet-Inference\Splitted dataset"),
+        default=Path(r"c:\Gojii\xray lung\forked\CheXNet-Inference\inference\heatmaps"),
         help="Path to the YOLO dataset folder (contains images/ and labels/ subfolders)."
     )
     parser.add_argument(
@@ -20,6 +51,18 @@ def parse_args():
         type=Path,
         default=Path(r"c:\Gojii\xray lung\forked\CheXNet-Inference\lung segmentation\output_masks"),
         help="Path to the lung segmentation masks folder (contains train/, valid/, test/ subfolders)."
+    )
+    parser.add_argument(
+        "--images-dir", "-i",
+        type=Path,
+        default=Path(r"c:\Gojii\xray lung\forked\CheXNet-Inference\Splitted dataset\images"),
+        help="Path to the original images folder (contains train/, valid/, test/ subfolders)."
+    )
+    parser.add_argument(
+        "--output-dir", "-o",
+        type=Path,
+        default=Path(r"c:\Gojii\xray lung\forked\CheXNet-Inference\lung segmentation\output_mask"),
+        help="Path to save the filtered YOLO label files (contains train/, valid/, test/ subfolders)."
     )
     parser.add_argument(
         "--vis-dir", "-v",
@@ -100,7 +143,7 @@ def save_visualization(image_path: Path, mask_path: Path, kept_boxes: list, dele
     except Exception as e:
         print(f"  Error creating visualization for {image_path.name}: {e}")
 
-def process_split(label_dir: Path, mask_dir: Path, threshold: int, vis_dir: Path, backup_dir: Path, dataset_dir: Path):
+def process_split(label_dir: Path, mask_dir: Path, threshold: int, vis_dir: Path, backup_dir: Path, images_dir: Path, output_split_dir: Path):
     if not label_dir.exists():
         print(f"Label directory does not exist: {label_dir}")
         return 0, 0, 0, 0
@@ -125,12 +168,8 @@ def process_split(label_dir: Path, mask_dir: Path, threshold: int, vis_dir: Path
         stem = label_path.stem
         
         # Check if corresponding mask image exists
-        mask_path = None
-        for ext in [".jpg", ".jpeg", ".png", ".bmp"]:
-            candidate = mask_dir / f"{stem}{ext}"
-            if candidate.exists():
-                mask_path = candidate
-                break
+        base_stem = get_base_image_stem(stem)
+        mask_path = find_matching_file(mask_dir, base_stem)
                 
         # Determine source label path (read from backup if available to allow idempotency)
         read_path = label_path
@@ -145,6 +184,12 @@ def process_split(label_dir: Path, mask_dir: Path, threshold: int, vis_dir: Path
                 lines = f.readlines()
             total_bboxes_before += len(lines)
             total_bboxes_after += len(lines)
+            
+            # Write unmodified lines to the output directory
+            dest_path = output_split_dir / label_path.name
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(dest_path, "w", encoding="utf-8") as f:
+                f.writelines(lines)
             continue
             
         # Load mask and convert to grayscale numpy array
@@ -158,6 +203,12 @@ def process_split(label_dir: Path, mask_dir: Path, threshold: int, vis_dir: Path
                 lines = f.readlines()
             total_bboxes_before += len(lines)
             total_bboxes_after += len(lines)
+            
+            # Write unmodified lines to the output directory
+            dest_path = output_split_dir / label_path.name
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(dest_path, "w", encoding="utf-8") as f:
+                f.writelines(lines)
             continue
             
         # Read current bboxes from the source path
@@ -213,28 +264,20 @@ def process_split(label_dir: Path, mask_dir: Path, threshold: int, vis_dir: Path
         bboxes_after = len(kept_lines)
         total_bboxes_after += bboxes_after
         
-        # Write modified bboxes back to label file
+        # Write modified bboxes to output split directory
+        dest_path = output_split_dir / label_path.name
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(dest_path, "w", encoding="utf-8") as f:
+            f.writelines(kept_lines)
+            
         if bboxes_before != bboxes_after:
             files_modified += 1
             if bboxes_after == 0:
                 files_become_empty += 1
-            
-            with open(label_path, "w", encoding="utf-8") as f:
-                f.writelines(kept_lines)
-        else:
-            # For idempotency, ensure local matches if it was changed
-            with open(label_path, "w", encoding="utf-8") as f:
-                f.writelines(kept_lines)
                 
         # Generate visualization if boxes were deleted
         if deleted_boxes and vis_dir:
-            image_dir = dataset_dir / "images" / label_dir.name
-            image_path = None
-            for ext in [".jpg", ".jpeg", ".png", ".bmp"]:
-                candidate = image_dir / f"{stem}{ext}"
-                if candidate.exists():
-                    image_path = candidate
-                    break
+            image_path = find_matching_file(images_dir / label_dir.name if images_dir else None, base_stem)
             
             if image_path:
                 vis_output_path = vis_dir / label_dir.name / f"{stem}_deleted_bbox.jpg"
@@ -257,7 +300,10 @@ def main():
         print(f"Error: Dataset directory does not exist at: {args.dataset_dir}")
         sys.exit(1)
         
-    labels_root = args.dataset_dir / "labels"
+    labels_root = args.dataset_dir / "yolo_labels"
+    if not labels_root.exists():
+        labels_root = args.dataset_dir / "labels"
+        
     if not labels_root.exists():
         print(f"Error: Labels directory not found in dataset: {labels_root}")
         sys.exit(1)
@@ -292,7 +338,13 @@ def main():
         # Check if this split exists in labels
         if label_split_dir.is_dir():
             before, after, modified, missing = process_split(
-                label_split_dir, mask_split_dir, args.threshold, args.vis_dir, backup_dir, args.dataset_dir
+                label_dir=label_split_dir,
+                mask_dir=mask_split_dir,
+                threshold=args.threshold,
+                vis_dir=args.vis_dir,
+                backup_dir=backup_dir,
+                images_dir=args.images_dir,
+                output_split_dir=args.output_dir / split
             )
             grand_before += before
             grand_after += after
