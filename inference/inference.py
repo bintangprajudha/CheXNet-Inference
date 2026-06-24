@@ -722,15 +722,15 @@ def overlay_bounding_boxes(
         height = int(component["height"])
         x2 = x + width
         y2 = y + height
-        label = f"{class_name} {probability:.2f}"
+        label = class_name
 
-        draw.rectangle((x, y, x2, y2), outline=(255, 255, 0), width=2)
-        text_bbox = draw.textbbox((x, y), label)
-        text_width = text_bbox[2] - text_bbox[0]
-        text_height = text_bbox[3] - text_bbox[1]
-        label_y = max(0, y - text_height - 4)
-        draw.rectangle((x, label_y, x + text_width + 6, label_y + text_height + 4), fill=(255, 255, 0))
-        draw.text((x + 3, label_y + 2), label, fill=(0, 0, 0))
+        color = (0, 255, 0)
+        for thickness in range(1):
+            draw.rectangle(
+                (x - thickness, y - thickness, x2 + thickness, y2 + thickness),
+                outline=color,
+            )
+        draw.text((x + 5, y + 5), label, fill=color)
     return overlay
 
 
@@ -750,6 +750,16 @@ def component_to_yolo(component: Dict[str, float | int], image_width: int, image
 
 def slugify(value: str) -> str:
     return value.strip().lower().replace(" ", "_").replace("/", "_").replace("\\", "_")
+
+
+def sample_output_path(split_dir: Path, sample_id: str, suffix: str) -> Path:
+    sample_path = Path(sample_id)
+    return split_dir / sample_path.parent / f"{sample_path.stem}{suffix}"
+
+
+def segmentation_label_path(split_dir: Path, class_name: str, image_name: str) -> Path:
+    class_slug = slugify(class_name)
+    return split_dir / f"{class_slug}_{image_name}.txt"
 
 
 def select_heatmap_targets(
@@ -807,7 +817,7 @@ def save_heatmap_outputs(
     overlays_dir = output_dir / "overlays"
     masks_dir = output_dir / "masks"
     bboxes_dir = output_dir / "bboxes"
-    yolo_labels_dir = output_dir / "yolo_labels"
+    yolo_labels_dir = output_dir / "label_updated"
     overlays_dir.mkdir(parents=True, exist_ok=True)
     masks_dir.mkdir(parents=True, exist_ok=True)
     bboxes_dir.mkdir(parents=True, exist_ok=True)
@@ -820,7 +830,7 @@ def save_heatmap_outputs(
 
     model.eval()
     with torch.enable_grad():
-        for image_index, (split, sample_id, image_path) in enumerate(image_records):
+        for split, sample_id, image_path in image_records:
             image_key = f"{split}/{sample_id}"
             row = row_by_key[image_key]
 
@@ -836,6 +846,11 @@ def save_heatmap_outputs(
             bbox_values: List[str] = []
             yolo_bbox_values: List[str] = []
             yolo_label_lines: List[str] = []
+            split_slug = slugify(split)
+
+            split_yolo_dir = yolo_labels_dir / split_slug
+            split_yolo_dir.mkdir(parents=True, exist_ok=True)
+            yolo_label_path = split_yolo_dir / f"{slugify(sample_id.replace('/', '_'))}.txt"
 
             for model_idx, class_name in targets:
                 cam = cam_generator(tensor, model_idx)
@@ -846,18 +861,22 @@ def save_heatmap_outputs(
                 )
                 probability = row_probability(row, class_name)
 
-                split_slug = slugify(split)
-                stem_slug = slugify(Path(sample_id).stem)
-                sample_slug = slugify(sample_id.replace("/", "_"))
-                class_slug = slugify(class_name)
-                file_stem = f"{image_index:04d}_{split_slug}_{sample_slug}_{class_slug}"
+                split_overlays_dir = overlays_dir / split_slug
+                split_masks_dir = masks_dir / split_slug
+                split_bboxes_dir = bboxes_dir / split_slug
+                split_overlays_dir.mkdir(parents=True, exist_ok=True)
+                split_masks_dir.mkdir(parents=True, exist_ok=True)
+                split_bboxes_dir.mkdir(parents=True, exist_ok=True)
 
                 mask = threshold_heatmap(cam, heatmap_threshold)
                 components = connected_components(mask, min_component_area, max_components)
 
-                overlay_path = overlays_dir / f"{file_stem}_heatmap.jpg"
-                mask_path = masks_dir / f"{file_stem}_mask.png"
-                bbox_path = bboxes_dir / f"{file_stem}_bbox.jpg"
+                overlay_path = sample_output_path(split_overlays_dir, sample_id, "_heatmap.jpg")
+                mask_path = sample_output_path(split_masks_dir, sample_id, "_mask.png")
+                bbox_path = sample_output_path(split_bboxes_dir, sample_id, "_bbox.jpg")
+                overlay_path.parent.mkdir(parents=True, exist_ok=True)
+                mask_path.parent.mkdir(parents=True, exist_ok=True)
+                bbox_path.parent.mkdir(parents=True, exist_ok=True)
 
                 overlay_heatmap(original, cam).save(overlay_path, quality=95)
                 Image.fromarray((mask * 255).astype(np.uint8), mode="L").save(mask_path)
@@ -931,10 +950,10 @@ def save_heatmap_outputs(
                     }
                 )
 
-            yolo_split_dir = yolo_labels_dir / slugify(split)
-            yolo_split_dir.mkdir(parents=True, exist_ok=True)
-            yolo_label_path = yolo_split_dir / f"{slugify(sample_id.replace('/', '_'))}.txt"
-            yolo_label_path.write_text("\n".join(yolo_label_lines) + ("\n" if yolo_label_lines else ""), encoding="utf-8")
+            yolo_label_path.write_text(
+                "\n".join(yolo_label_lines) + ("\n" if yolo_label_lines else ""),
+                encoding="utf-8",
+            )
 
             row["heatmap_files"] = "|".join(heatmap_files)
             row["bbox_xywh"] = "|".join(bbox_values)
